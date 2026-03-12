@@ -13,13 +13,7 @@ from typing import List, Dict
 
 # Initialize embedding model
 print("Loading BGE embedding model...")
-embedding_model = None
-
-def get_embedding_model():
-    global embedding_model
-    if embedding_model is None:
-        embedding_model = SentenceTransformer('all-MiniLM-L6-v2')
-    return embedding_model
+embedding_model = SentenceTransformer('all-MiniLM-L6-v2')
 
 # Configuration
 DATA_DIR = "data"
