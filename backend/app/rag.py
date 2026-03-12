@@ -29,12 +29,24 @@ except Exception as e:
     TAVILY_AVAILABLE = False
     print(f"⚠️ Tavily API initialization failed: {e}")
 
-# Initialize models
-print("Loading BGE embedding model...")
-embedding_model = SentenceTransformer('BAAI/bge-base-en-v1.5')
-print("Loading Cross-Encoder reranker...")
-reranker = CrossEncoder('cross-encoder/ms-marco-MiniLM-L-6-v2')
+# Models are lazy-loaded on first request to avoid OOM during startup
+_embedding_model = None
+_reranker = None
 groq_client = Groq(api_key=os.getenv("GROQ_API_KEY"))
+
+def get_embedding_model():
+    global _embedding_model
+    if _embedding_model is None:
+        print("Loading embedding model (first request)...")
+        _embedding_model = SentenceTransformer('all-MiniLM-L6-v2')
+    return _embedding_model
+
+def get_reranker():
+    global _reranker
+    if _reranker is None:
+        print("Loading Cross-Encoder reranker (first request)...")
+        _reranker = CrossEncoder('cross-encoder/ms-marco-MiniLM-L-6-v2')
+    return _reranker
 
 # Master System Prompts
 SEARCH_PROMPT = """You are LexQuery — a legal retrieval engine, not a chatbot.
@@ -202,7 +214,7 @@ def load_resources():
         metadata = None
 
 def create_embedding(text: str) -> np.ndarray:
-    return embedding_model.encode([text])[0]
+    return get_embedding_model().encode([text])[0]
 
 def detect_law_strict(query: str):
     """Detect Law from query for strict filtering"""
@@ -318,7 +330,7 @@ def search_similar_documents(query: str, top_k: int = 12, use_rerank: bool = Tru
     if use_rerank:
         print(f"Reranking {len(semantic_candidates)} candidates...")
         pairs = [[query, doc['text']] for doc in semantic_candidates]
-        rerank_scores = reranker.predict(pairs)
+        rerank_scores = get_reranker().predict(pairs)
         
         for i, score in enumerate(rerank_scores):
             semantic_candidates[i]['rerank_score'] = float(score)
