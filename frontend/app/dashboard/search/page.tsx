@@ -111,18 +111,24 @@ export default function SearchPage() {
                             </h3>
                             <div className="grid gap-3">
                                 {result.results.slice(0, 5).map((source: any, index: number) => (
-                                    <div key={index} className="bg-white border rounded-lg p-3 hover:bg-gray-50 transition flex items-center justify-between">
+                                    <a
+                                        key={index}
+                                        href={source.source?.startsWith("http") ? source.source : `https://www.google.com/search?q=${encodeURIComponent(source.title)}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="bg-white border rounded-lg p-3 hover:bg-blue-50 hover:border-blue-200 transition flex items-center justify-between group"
+                                    >
                                         <div className="flex items-center gap-3">
-                                            <FileText className="h-4 w-4 text-gray-400" />
+                                            <FileText className="h-4 w-4 text-gray-400 group-hover:text-blue-500" />
                                             <div>
-                                                <p className="text-sm font-medium text-gray-900">{source.title}</p>
+                                                <p className="text-sm font-medium text-gray-900 group-hover:text-blue-700 underline-offset-2 group-hover:underline">{source.title}</p>
                                                 <p className="text-xs text-gray-500">{source.court} • {source.date}</p>
                                             </div>
                                         </div>
                                         <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded">
                                             Match: {Math.round(source.score * 100) / 100}
                                         </span>
-                                    </div>
+                                    </a>
                                 ))}
                             </div>
                         </div>
