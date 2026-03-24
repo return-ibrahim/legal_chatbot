@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { searchService } from "@/lib/api";
 import { Button } from "@/components/ui/button";
@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Search, Loader2, FileText, Calendar, Building2 } from "lucide-react";
 
-export default function SearchPage() {
+function SearchContent() {
     const [query, setQuery] = useState("");
     const [result, setResult] = useState<any>(null);
     const [loading, setLoading] = useState(false);
@@ -145,5 +145,17 @@ export default function SearchPage() {
                 </div>
             )}
         </div>
+    );
+}
+
+export default function SearchPage() {
+    return (
+        <Suspense fallback={
+            <div className="flex items-center justify-center py-12">
+                <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+            </div>
+        }>
+            <SearchContent />
+        </Suspense>
     );
 }
