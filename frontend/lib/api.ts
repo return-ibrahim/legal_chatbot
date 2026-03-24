@@ -117,6 +117,16 @@ export const historyService = {
         const response = await api.get('/history', { params: { limit } });
         return response.data;
     },
+
+    deleteHistory: async (id: string) => {
+        const response = await api.delete(`/history/${id}`);
+        return response.data;
+    },
+
+    clearAllHistory: async () => {
+        const response = await api.delete('/history');
+        return response.data;
+    },
 };
 
 export const profileService = {
