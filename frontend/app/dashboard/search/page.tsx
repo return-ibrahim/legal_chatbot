@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { searchService } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,10 +14,19 @@ export default function SearchPage() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
     const [searched, setSearched] = useState(false);
+    const searchParams = useSearchParams();
 
-    const handleSearch = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!query.trim()) return;
+    // Auto-run query from history redirect
+    useEffect(() => {
+        const param = searchParams.get("query");
+        if (param) {
+            setQuery(param);
+            runSearch(param);
+        }
+    }, [searchParams]);
+
+    const runSearch = async (queryText: string) => {
+        if (!queryText.trim()) return;
 
         setLoading(true);
         setError("");
@@ -24,7 +34,7 @@ export default function SearchPage() {
         setResult(null);
 
         try {
-            const data = await searchService.search(query, 8, "research");
+            const data = await searchService.search(queryText, 8, "research");
             setResult(data);
         } catch (err: any) {
             setError(err.response?.data?.detail || "Failed to search. Please try again.");
@@ -32,6 +42,11 @@ export default function SearchPage() {
         } finally {
             setLoading(false);
         }
+    };
+
+    const handleSearch = async (e: React.FormEvent) => {
+        e.preventDefault();
+        await runSearch(query);
     };
 
     return (
@@ -111,24 +126,18 @@ export default function SearchPage() {
                             </h3>
                             <div className="grid gap-3">
                                 {result.results.slice(0, 5).map((source: any, index: number) => (
-                                    <a
-                                        key={index}
-                                        href={source.source?.startsWith("http") ? source.source : `https://www.google.com/search?q=${encodeURIComponent(source.title)}`}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="bg-white border rounded-lg p-3 hover:bg-blue-50 hover:border-blue-200 transition flex items-center justify-between group"
-                                    >
+                                    <div key={index} className="bg-white border rounded-lg p-3 hover:bg-gray-50 transition flex items-center justify-between">
                                         <div className="flex items-center gap-3">
-                                            <FileText className="h-4 w-4 text-gray-400 group-hover:text-blue-500" />
+                                            <FileText className="h-4 w-4 text-gray-400" />
                                             <div>
-                                                <p className="text-sm font-medium text-gray-900 group-hover:text-blue-700 underline-offset-2 group-hover:underline">{source.title}</p>
+                                                <p className="text-sm font-medium text-gray-900">{source.title}</p>
                                                 <p className="text-xs text-gray-500">{source.court} • {source.date}</p>
                                             </div>
                                         </div>
                                         <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded">
                                             Match: {Math.round(source.score * 100) / 100}
                                         </span>
-                                    </a>
+                                    </div>
                                 ))}
                             </div>
                         </div>
