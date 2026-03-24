@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { chatService } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,6 +19,8 @@ export default function ChatPage() {
     const [input, setInput] = useState("");
     const [loading, setLoading] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
+    const searchParams = useSearchParams();
+    const hasAutoRun = useRef(false);
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -27,17 +30,25 @@ export default function ChatPage() {
         scrollToBottom();
     }, [messages]);
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!input.trim() || loading) return;
+    // Auto-run query from history redirect
+    useEffect(() => {
+        const query = searchParams.get("query");
+        if (query && !hasAutoRun.current) {
+            hasAutoRun.current = true;
+            runQuery(query);
+        }
+    }, [searchParams]);
 
-        const userMessage: Message = { role: "user", content: input };
+    const runQuery = async (queryText: string) => {
+        if (!queryText.trim() || loading) return;
+
+        const userMessage: Message = { role: "user", content: queryText };
         setMessages((prev) => [...prev, userMessage]);
         setInput("");
         setLoading(true);
 
         try {
-            const response = await chatService.chat(input, 3, "advice");
+            const response = await chatService.chat(queryText, 3, "advice");
             const assistantMessage: Message = {
                 role: "assistant",
                 content: response.answer,
@@ -53,6 +64,11 @@ export default function ChatPage() {
         } finally {
             setLoading(false);
         }
+    };
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        await runQuery(input);
     };
 
     return (
@@ -74,8 +90,7 @@ export default function ChatPage() {
                     {messages.map((message, index) => (
                         <div
                             key={index}
-                            className={`flex gap-3 ${message.role === "user" ? "justify-end" : "justify-start"
-                                }`}
+                            className={`flex gap-3 ${message.role === "user" ? "justify-end" : "justify-start"}`}
                         >
                             {message.role === "assistant" && (
                                 <div className="flex-shrink-0 w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
@@ -84,10 +99,11 @@ export default function ChatPage() {
                             )}
 
                             <div
-                                className={`max-w-[70%] rounded-lg px-4 py-3 ${message.role === "user"
-                                    ? "bg-blue-600 text-white"
-                                    : "bg-gray-100 text-gray-900"
-                                    }`}
+                                className={`max-w-[70%] rounded-lg px-4 py-3 ${
+                                    message.role === "user"
+                                        ? "bg-blue-600 text-white"
+                                        : "bg-gray-100 text-gray-900"
+                                }`}
                             >
                                 <p className="whitespace-pre-wrap">{message.content}</p>
 
