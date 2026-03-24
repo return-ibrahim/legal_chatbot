@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { chatService } from "@/lib/api";
 import { Button } from "@/components/ui/button";
@@ -14,7 +14,7 @@ interface Message {
     sources?: any[];
 }
 
-export default function ChatPage() {
+function ChatContent() {
     const [messages, setMessages] = useState<Message[]>([]);
     const [input, setInput] = useState("");
     const [loading, setLoading] = useState(false);
@@ -162,5 +162,17 @@ export default function ChatPage() {
                 </div>
             </Card>
         </div>
+    );
+}
+
+export default function ChatPage() {
+    return (
+        <Suspense fallback={
+            <div className="flex items-center justify-center py-12">
+                <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+            </div>
+        }>
+            <ChatContent />
+        </Suspense>
     );
 }
